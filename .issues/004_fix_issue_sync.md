@@ -20,3 +20,4 @@ The current issue synchronization process has several flaws:
 - [x] Synchronization works for all branches.
 - [x] No duplicate issues are created when local state is reset.
 - [x] `gh_number` is accurately tracked in local files.
+
