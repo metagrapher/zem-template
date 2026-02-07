@@ -25,20 +25,22 @@ const findExistingIssueByTitle = async (title) => {
   }
 }
 
-async function sync() {
-  const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'));
+const sync = async () => {
+  const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'))
 
   for (const file of files) {
-    const filePath = path.join(ISSUES_DIR, file);
-    const content = fs.readFileSync(filePath, 'utf8');
-    const { attributes, body } = fm(content);
-    let gh_number = attributes.gh_number;
+    const filePath = path.join(ISSUES_DIR, file)
+    const content = fs.readFileSync(filePath, 'utf8')
+    const { attributes, body } = fm(content)
+
+    let gh_number = attributes.gh_number
+
     if (!gh_number) {
-      console.log(`No gh_number found for ${file}, searching by title...`);
-      const existing = await findExistingIssueByTitle(attributes.title);
+      console.log(`[SYNC] Searching GitHub for issue: "${attributes.title}"`)
+      const existing = await findExistingIssueByTitle(attributes.title)
       if (existing) {
-        gh_number = existing.number;
-        console.log(`Found existing issue #${gh_number}`);
+        gh_number = existing.number
+        console.log(`[SYNC] Matched existing issue #${gh_number}`)
       }
     }
     if (!gh_number) {
