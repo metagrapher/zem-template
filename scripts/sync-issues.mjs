@@ -86,34 +86,17 @@ const sync = async () => {
         console.log(`[SYNC] Matched existing issue #${gh_number}`)
       }
     }
+    const state = (status === 'CLOSED' ? 'closed' : 'open')
+    const labels = [...(status === 'IN_PROGRESS' ? ['in-progress'] : []), ...(attributes.labels || [])]
+
     if (!gh_number) {
       console.log(`[SYNC] Creating new GitHub issue for "${file}"`)
-      const { data } = await octokit.rest.issues.create(
-        ({
-          owner
-          , repo
-          , title: attributes.title
-          , body: body
-          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
-        }
-        )
-      )
+      const { data } = await octokit.rest.issues.create({ owner, repo, title: attributes.title, body, labels })
       gh_number = data.number
       console.log(`[SYNC] Success! Created #${gh_number}`)
     } else {
-      console.log(`[SYNC] Updating GitHub issue #${gh_number} from local state`)
-      await octokit.rest.issues.update(
-        ({
-          owner
-          , repo
-          , issue_number: parseInt(gh_number, 10)
-          , title: attributes.title
-          , body: body
-          , state: ((attributes.status === 'CLOSED' || attributes.status === 'DONE') ? 'closed' : 'open')
-          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
-        }
-        )
-      )
+      console.log(`[SYNC] Updating GitHub issue #${gh_number} (${status})`)
+      await octokit.rest.issues.update({ owner, repo, issue_number: parseInt(gh_number, 10), title: attributes.title, body, state, labels })
     }
 
     const newContent =
