@@ -5,7 +5,22 @@ import fm from 'front-matter';
 
 const ISSUES_DIR = '.issues';
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-const [owner, repo] = process.env.GITHUB_REPOSITORY.split('/');
+const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
+
+const findExistingIssueByTitle = async (title) => {
+  try {
+    const { data } = await octokit.rest.issues.listForRepo({
+      owner,
+      repo,
+      state: 'all',
+      per_page: 100
+    });
+    return data.find(issue => issue.title === title);
+  } catch (error) {
+    console.error(`Error searching for existing issue titled "${title}":`, error);
+    return null;
+  }
+}
 
 async function sync() {
   const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'));
@@ -14,8 +29,16 @@ async function sync() {
     const filePath = path.join(ISSUES_DIR, file);
     const content = fs.readFileSync(filePath, 'utf8');
     const { attributes, body } = fm(content);
-    
-    if (!attributes.gh_number) {
+    let gh_number = attributes.gh_number;
+    if (!gh_number) {
+      console.log(`No gh_number found for ${file}, searching by title...`);
+      const existing = await findExistingIssueByTitle(attributes.title);
+      if (existing) {
+        gh_number = existing.number;
+        console.log(`Found existing issue #${gh_number}`);
+      }
+    }
+    if (!gh_number) {
       console.log(`Creating issue for ${file}...`);
       const { data } = await octokit.issues.create({
         owner,
@@ -24,20 +47,22 @@ async function sync() {
         body: body,
         labels: attributes.labels || []
       });
-      
-      const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${data.number}\n---\n${body}`;
-      fs.writeFileSync(filePath, newContent);
-      console.log(`Created GitHub Issue #${data.number}`);
+      gh_number = data.number;
+      console.log(`Created GitHub Issue #${gh_number}`);
     } else {
-      console.log(`Updating issue #${attributes.gh_number}...`);
+      console.log(`Updating issue #${gh_number}...`);
       await octokit.issues.update({
         owner,
         repo,
-        issue_number: attributes.gh_number,
+        issue_number: gh_number,
         title: attributes.title,
-        body: body
+        body: body,
+        labels: attributes.labels || []
       });
     }
+
+    const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${gh_number}\n---\n${body}`;
+    fs.writeFileSync(filePath, newContent);
   }
 }
 
