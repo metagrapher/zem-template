@@ -66,7 +66,9 @@ async function sync() {
     }
 
     const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${gh_number}\n---\n${body}`;
-    fs.writeFileSync(filePath, newContent);
+    if (newContent.trim() !== content.trim()) {
+      fs.writeFileSync(filePath, newContent);
+    }
   }
 }
 
