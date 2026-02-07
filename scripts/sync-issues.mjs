@@ -25,6 +25,45 @@ export const execSafe = (cmd) => {
   }
 }
 
+export const readSafe = (path) => {
+  try {
+    return (
+      {
+        ok: true
+        , value: fs.readFileSync(path, 'utf8')
+      }
+    )
+  } catch (error) {
+    console.warn(`[ZEM] Subsystem failure (fs): Failed to read "${path}".`)
+    return (
+      {
+        ok: false
+        , error
+      }
+    )
+  }
+}
+
+export const writeSafe = (path, content) => {
+  try {
+    fs.writeFileSync(path, content)
+    return (
+      {
+        ok: true
+        , value: true
+      }
+    )
+  } catch (error) {
+    console.warn(`[ZEM] Subsystem failure (fs): Failed to write "${path}".`)
+    return (
+      {
+        ok: false
+        , error
+      }
+    )
+  }
+}
+
 export const discoverRepo = () => {
   const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
   if (envOwner && envRepo) return { owner: envOwner, repo: envRepo }
