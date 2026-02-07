@@ -10,3 +10,4 @@ Add `map` and `flatMap` to the `Result` monad for composable error handling.
 - `map` applies a function to the value if `Ok`.
 - `flatMap` chains another `Result` if `Ok`.
 - Operators preserve the `Fail` state.
+
