@@ -6,8 +6,17 @@
 BRANCH=$(git rev-parse --abbrev-ref HEAD)
 USER_NAME=$(git config user.name)
 SIGNING_ENABLED=$(git config commit.gpgsign)
+MAX_DIFF_LINES=50
 
 echo "--- [Antigravity AI] Running Pre-commit Gate ---"
+
+# 0. Size Gate (Atomic Enforcement)
+DIFF_LINES=$(git diff --cached | wc -l | xargs)
+if [[ "$DIFF_LINES" -gt "$MAX_DIFF_LINES" ]]; then
+  echo -e "\x1b[31m[ERROR] Size Violation: This commit changes $DIFF_LINES lines.\x1b[0m"
+  echo "The current atomic limit is $MAX_DIFF_LINES lines. Please split your changes."
+  exit 1
+fi
 
 # 1. Block 'primary' branch commits for AI
 if [[ "$BRANCH" == "primary" && "$USER_NAME" == "Antigravity AI" ]]; then
