@@ -77,6 +77,7 @@ const sync = async () => {
       )
 
     if (newContent.trim() !== content.trim()) {
+      console.log(`[SYNC] Updating local file: ${file}`)
       fs.writeFileSync(filePath, newContent)
     }
   }
