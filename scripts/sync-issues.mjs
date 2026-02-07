@@ -75,6 +75,6 @@ const sync = async () => {
 }
 
 sync().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+  console.error('[FATAL] Sync failed:', err)
+  process.exit(1)
+})
