@@ -29,7 +29,15 @@ async function sync() {
     const filePath = path.join(ISSUES_DIR, file);
     const content = fs.readFileSync(filePath, 'utf8');
     const { attributes, body } = fm(content);
-
+    let gh_number = attributes.gh_number;
+    if (!gh_number) {
+      console.log(`No gh_number found for ${file}, searching by title...`);
+      const existing = await findExistingIssueByTitle(attributes.title);
+      if (existing) {
+        gh_number = existing.number;
+        console.log(`Found existing issue #${gh_number}`);
+      }
+    }
     if (!gh_number) {
       console.log(`Creating issue for ${file}...`);
       const { data } = await octokit.issues.create({
