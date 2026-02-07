@@ -64,6 +64,19 @@ const sync = async () => {
     const { attributes, body } = fm(content)
 
     let gh_number = attributes.gh_number
+    let status = folder
+    let targetStatus = attributes.status || folder
+
+    const verifiedStatus = verifyTargetStatus(file, targetStatus, attributes)
+
+    if (verifiedStatus !== status) {
+      const newDirPath = path.join(ISSUES_DIR, verifiedStatus)
+      if (!fs.existsSync(newDirPath)) fs.mkdirSync(newDirPath)
+      const newFilePath = path.join(newDirPath, file)
+      console.log(`[SYNC] Moving "${file}" from ${status} to ${verifiedStatus}`)
+      fs.renameSync(filePath, newFilePath)
+      status = verifiedStatus
+    }
 
     if (!gh_number) {
       console.log(`[SYNC] Searching GitHub for issue: "${attributes.title}"`)
