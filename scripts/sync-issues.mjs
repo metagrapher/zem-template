@@ -102,15 +102,17 @@ const sync = async () => {
     const newContent =
       (`---\n`
         + `title: ${attributes.title}\n`
-        + `status: ${attributes.status || 'OPEN'}\n`
+        + `status: ${status}\n`
         + `gh_number: ${gh_number}\n`
+        + (attributes.test_ref ? `test_ref: ${attributes.test_ref}\n` : '')
         + `---\n`
         + `${body}`
       )
 
+    const currentFilePath = path.join(ISSUES_DIR, status, file)
     if (newContent.trim() !== content.trim()) {
       console.log(`[SYNC] Updating local file: ${file}`)
-      fs.writeFileSync(filePath, newContent)
+      fs.writeFileSync(currentFilePath, newContent)
     }
   }
 }
