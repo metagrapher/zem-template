@@ -57,15 +57,15 @@ const verifyTargetStatus = (file, target, attr) => {
     console.warn(`[SYNC] WARN: "${file}" missing test_ref for IN_PROGRESS. Degrading to OPEN.`)
     return 'OPEN'
   }
-  if (target === 'CLOSED' && !attr.test_ref) {
-    console.warn(`[SYNC] WARN: "${file}" missing test_ref for CLOSED. Degrading to IN_PROGRESS.`)
+  if ((target === 'CLOSED' || target === 'DONE') && !attr.test_ref) {
+    console.warn(`[SYNC] WARN: "${file}" missing test_ref for ${target}. Degrading to IN_PROGRESS.`)
     return verifyTargetStatus(file, 'IN_PROGRESS', attr)
   }
   return target
 }
 
 const getAllIssueFiles = () => {
-  const folders = ['OPEN', 'IN_PROGRESS', 'CLOSED']
+  const folders = ['OPEN', 'IN_PROGRESS', 'CLOSED', 'DONE']
   return folders.map(f => {
     const dir = path.join(ISSUES_DIR, f)
     if (!fs.existsSync(dir)) return []
