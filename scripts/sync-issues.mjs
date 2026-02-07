@@ -6,7 +6,26 @@ import { execSync } from 'child_process'
 
 const ISSUES_DIR = '.issues'
 
-const discoverRepo = () => {
+export const execSafe = (cmd) => {
+  try {
+    return (
+      {
+        ok: true
+        , value: execSync(cmd, { encoding: 'utf8' }).trim()
+      }
+    )
+  } catch (error) {
+    console.warn(`[ZEM] Subsystem failure (exec): "${cmd}" failed.`)
+    return (
+      {
+        ok: false
+        , error
+      }
+    )
+  }
+}
+
+export const discoverRepo = () => {
   const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
   if (envOwner && envRepo) return { owner: envOwner, repo: envRepo }
 
