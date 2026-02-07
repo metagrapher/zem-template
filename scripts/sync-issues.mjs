@@ -30,7 +30,7 @@ async function sync() {
     const content = fs.readFileSync(filePath, 'utf8');
     const { attributes, body } = fm(content);
 
-    if (!attributes.gh_number) {
+    if (!gh_number) {
       console.log(`Creating issue for ${file}...`);
       const { data } = await octokit.issues.create({
         owner,
@@ -39,20 +39,22 @@ async function sync() {
         body: body,
         labels: attributes.labels || []
       });
-
-      const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${data.number}\n---\n${body}`;
-      fs.writeFileSync(filePath, newContent);
-      console.log(`Created GitHub Issue #${data.number}`);
+      gh_number = data.number;
+      console.log(`Created GitHub Issue #${gh_number}`);
     } else {
-      console.log(`Updating issue #${attributes.gh_number}...`);
+      console.log(`Updating issue #${gh_number}...`);
       await octokit.issues.update({
         owner,
         repo,
-        issue_number: attributes.gh_number,
+        issue_number: gh_number,
         title: attributes.title,
-        body: body
+        body: body,
+        labels: attributes.labels || []
       });
     }
+
+    const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${gh_number}\n---\n${body}`;
+    fs.writeFileSync(filePath, newContent);
   }
 }
 
