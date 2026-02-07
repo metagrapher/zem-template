@@ -73,7 +73,7 @@ const getAllIssueFiles = () => {
   }).flat()
 }
 
-const sync = async () => {
+export const sync = async () => {
   const issueFiles = getAllIssueFiles()
 
   for (const { file, folder } of issueFiles) {
@@ -143,7 +143,9 @@ const sync = async () => {
   }
 }
 
-sync().catch(err => {
-  console.error('[FATAL] Sync failed:', err)
-  process.exit(1)
-})
+if (process.argv[1] === path.resolve(import.meta.filename)) {
+  sync().catch(err => {
+    console.error('[FATAL] Sync failed:', err)
+    process.exit(1)
+  })
+}
