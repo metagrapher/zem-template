@@ -6,7 +6,12 @@ on:
       - primary
     paths:
       - '.issues/**'
-
+      
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+  
 jobs:
   sync:
     runs-on: ubuntu-latest
