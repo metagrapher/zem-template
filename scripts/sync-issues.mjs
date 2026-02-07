@@ -1,24 +1,27 @@
-import fs from 'fs';
-import path from 'path';
-import { Octokit } from '@octokit/rest';
-import fm from 'front-matter';
+import fs from 'fs'
+import path from 'path'
+import { Octokit } from '@octokit/rest'
+import fm from 'front-matter'
 
-const ISSUES_DIR = '.issues';
-const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/');
+const ISSUES_DIR = '.issues'
+const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
+const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/')
 
 const findExistingIssueByTitle = async (title) => {
   try {
-    const { data } = await octokit.rest.issues.listForRepo({
-      owner,
-      repo,
-      state: 'all',
-      per_page: 100
-    });
-    return data.find(issue => issue.title === title);
+    const { data } = await octokit.rest.issues.listForRepo(
+      ({
+        owner
+        , repo
+        , state: 'all'
+        , per_page: 100
+      }
+      )
+    )
+    return data.find(issue => issue.title === title)
   } catch (error) {
-    console.error(`Error searching for existing issue titled "${title}":`, error);
-    return null;
+    console.error(`Error searching for existing issue titled "${title}":`, error)
+    return null
   }
 }
 
