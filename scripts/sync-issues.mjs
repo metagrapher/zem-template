@@ -2,10 +2,28 @@ import fs from 'fs'
 import path from 'path'
 import { Octokit } from '@octokit/rest'
 import fm from 'front-matter'
+import { execSync } from 'child_process'
 
 const ISSUES_DIR = '.issues'
+
+const discoverRepo = () => {
+  const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
+  if (envOwner && envRepo) return { owner: envOwner, repo: envRepo }
+
+  try {
+    const url = execSync('git remote get-url origin', { encoding: 'utf8' }).trim()
+    // Matches git@github.com:owner/repo.git OR https://github.com/owner/repo.git
+    const match = url.match(/[:/]([^/]+)\/([^/.]+)(?:\.git)?$/)
+    if (match) return { owner: match[1], repo: match[2] }
+  } catch (e) {
+    // Silent fail if git fails
+  }
+
+  return { owner: 'metagrapher', repo: 'zem-template' } // Last resort fallback
+}
+
+const { owner, repo } = discoverRepo()
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/')
 
 const findExistingIssueByTitle = async (title) => {
   try {
@@ -34,15 +52,49 @@ const findExistingIssueByTitle = async (title) => {
   }
 }
 
-const sync = async () => {
-  const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'))
+const verifyTargetStatus = (file, target, attr) => {
+  if (target === 'IN_PROGRESS' && !attr.test_ref) {
+    console.warn(`[SYNC] WARN: "${file}" missing test_ref for IN_PROGRESS. Degrading to OPEN.`)
+    return 'OPEN'
+  }
+  if ((target === 'CLOSED' || target === 'DONE') && !attr.test_ref) {
+    console.warn(`[SYNC] WARN: "${file}" missing test_ref for ${target}. Degrading to IN_PROGRESS.`)
+    return verifyTargetStatus(file, 'IN_PROGRESS', attr)
+  }
+  return target
+}
 
-  for (const file of files) {
-    const filePath = path.join(ISSUES_DIR, file)
+const getAllIssueFiles = () => {
+  const folders = ['OPEN', 'IN_PROGRESS', 'CLOSED', 'DONE']
+  return folders.map(f => {
+    const dir = path.join(ISSUES_DIR, f)
+    if (!fs.existsSync(dir)) return []
+    return fs.readdirSync(dir).filter(f => f.endsWith('.md')).map(file => ({ file, folder: f }))
+  }).flat()
+}
+
+export const sync = async () => {
+  const issueFiles = getAllIssueFiles()
+
+  for (const { file, folder } of issueFiles) {
+    const filePath = path.join(ISSUES_DIR, folder, file)
     const content = fs.readFileSync(filePath, 'utf8')
     const { attributes, body } = fm(content)
 
     let gh_number = attributes.gh_number
+    let status = folder
+    let targetStatus = attributes.status || folder
+
+    const verifiedStatus = verifyTargetStatus(file, targetStatus, attributes)
+
+    if (verifiedStatus !== status) {
+      const newDirPath = path.join(ISSUES_DIR, verifiedStatus)
+      if (!fs.existsSync(newDirPath)) fs.mkdirSync(newDirPath)
+      const newFilePath = path.join(newDirPath, file)
+      console.log(`[SYNC] Moving "${file}" from ${status} to ${verifiedStatus}`)
+      fs.renameSync(filePath, newFilePath)
+      status = verifiedStatus
+    }
 
     if (!gh_number) {
       console.log(`[SYNC] Searching GitHub for issue: "${attributes.title}"`)
@@ -52,53 +104,48 @@ const sync = async () => {
         console.log(`[SYNC] Matched existing issue #${gh_number}`)
       }
     }
+    const state = (status === 'CLOSED' || status === 'DONE' ? 'closed' : 'open')
+    const labels = [...(status === 'IN_PROGRESS' ? ['in-progress'] : []), ...(attributes.labels || [])]
+
     if (!gh_number) {
       console.log(`[SYNC] Creating new GitHub issue for "${file}"`)
-      const { data } = await octokit.rest.issues.create(
-        ({
-          owner
-          , repo
-          , title: attributes.title
-          , body: body
-          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
-        }
-        )
-      )
+      const { data } = await octokit.rest.issues.create({ owner, repo, title: attributes.title, body, labels })
       gh_number = data.number
       console.log(`[SYNC] Success! Created #${gh_number}`)
     } else {
-      console.log(`[SYNC] Updating GitHub issue #${gh_number} from local state`)
-      await octokit.rest.issues.update(
-        ({
-          owner
-          , repo
-          , issue_number: parseInt(gh_number, 10)
-          , title: attributes.title
-          , body: body
-          , state: ((attributes.status === 'CLOSED' || attributes.status === 'DONE') ? 'closed' : 'open')
-          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
+      console.log(`[SYNC] Updating GitHub issue #${gh_number} (${status})`)
+      try {
+        await octokit.rest.issues.update({ owner, repo, issue_number: parseInt(gh_number, 10), title: attributes.title, body, state, labels })
+      } catch (error) {
+        if (error.status === 422) {
+          console.warn(`[ZEM] WARN: Failed to update GitHub issue #${gh_number}. This might be a merged PR. Skipping state/title sync.`)
+        } else {
+          throw error
         }
-        )
-      )
+      }
     }
 
     const newContent =
       (`---\n`
         + `title: ${attributes.title}\n`
-        + `status: ${attributes.status || 'OPEN'}\n`
+        + `status: ${status}\n`
         + `gh_number: ${gh_number}\n`
+        + (attributes.test_ref ? `test_ref: ${attributes.test_ref}\n` : '')
         + `---\n`
         + `${body}`
       )
 
+    const currentFilePath = path.join(ISSUES_DIR, status, file)
     if (newContent.trim() !== content.trim()) {
       console.log(`[SYNC] Updating local file: ${file}`)
-      fs.writeFileSync(filePath, newContent)
+      fs.writeFileSync(currentFilePath, newContent)
     }
   }
 }
 
-sync().catch(err => {
-  console.error('[FATAL] Sync failed:', err)
-  process.exit(1)
-})
+if (process.argv[1] === path.resolve(import.meta.filename)) {
+  sync().catch(err => {
+    console.error('[FATAL] Sync failed:', err)
+    process.exit(1)
+  })
+}
