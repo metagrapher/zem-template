@@ -67,9 +67,17 @@ const sync = async () => {
       });
     }
 
-    const newContent = `---\ntitle: ${attributes.title}\nstatus: ${attributes.status || 'OPEN'}\ngh_number: ${gh_number}\n---\n${body}`;
+    const newContent =
+      (`---\n`
+        + `title: ${attributes.title}\n`
+        + `status: ${attributes.status || 'OPEN'}\n`
+        + `gh_number: ${gh_number}\n`
+        + `---\n`
+        + `${body}`
+      )
+
     if (newContent.trim() !== content.trim()) {
-      fs.writeFileSync(filePath, newContent);
+      fs.writeFileSync(filePath, newContent)
     }
   }
 }
