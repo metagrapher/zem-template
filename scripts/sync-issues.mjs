@@ -46,11 +46,20 @@ const verifyTargetStatus = (file, target, attr) => {
   return target
 }
 
-const sync = async () => {
-  const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'))
+const getAllIssueFiles = () => {
+  const folders = ['OPEN', 'IN_PROGRESS', 'CLOSED']
+  return folders.map(f => {
+    const dir = path.join(ISSUES_DIR, f)
+    if (!fs.existsSync(dir)) return []
+    return fs.readdirSync(dir).filter(f => f.endsWith('.md')).map(file => ({ file, folder: f }))
+  }).flat()
+}
 
-  for (const file of files) {
-    const filePath = path.join(ISSUES_DIR, file)
+const sync = async () => {
+  const issueFiles = getAllIssueFiles()
+
+  for (const { file, folder } of issueFiles) {
+    const filePath = path.join(ISSUES_DIR, folder, file)
     const content = fs.readFileSync(filePath, 'utf8')
     const { attributes, body } = fm(content)
 
