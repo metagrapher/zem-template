@@ -34,15 +34,17 @@ All work must occur in a "Sandbox" branch.
 
 ## 3. Mission-Focused Workflow (Issue Tracking)
 
-### 3.1 Pre-Development Issues
+### 3.1 Pre-Development Issues (Truth-on-Disk)
 No code may be written without a corresponding **Issue**.
-- If a task is requested, the AI must first draft or reference an Issue.
-- If a bug is discovered during development, the AI must **STOP** and create a new Issue rather than fixing it immediately.
+- Every issue is a markdown file in the `.issues/` directory.
+- Format: `.issues/NNN_description.md` with frontmatter (title, status, gh_number).
+- **GitHub Sync**: A GitHub Action (`issue-sync.yml`) automatically mirrors these files to GitHub Issues upon pushing to `primary`.
 
 ### 3.2 Atomic, Issue-Linked Commits
 Every commit must be atomic (representing a single logical change) and must reference the Issue.
 - **Commit Message Format**: `[type]([scope]): [description] #[issue_number]`
 - **Example**: `feat(git): implement identity separation #1`
+
 
 ## 4. TDD (Test Driven Development) Mandate
 

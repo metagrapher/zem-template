@@ -1,0 +1,39 @@
+name: Issue Sync
+
+on:
+  push:
+    branches:
+      - primary
+    paths:
+      - '.issues/**'
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: npm install @octokit/rest front-matter
+
+      - name: Sync Issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node scripts/sync-issues.mjs
+
+      - name: Commit Changes
+        run: |
+          git config --local user.name "Antigravity AI"
+          git config --local user.email "ai@metagrapher.com"
+          git add .issues/*.md
+          git diff --quiet && git diff --staged --quiet || git commit -m "chore(issue): sync github issue numbers #1"
+          git push origin primary
