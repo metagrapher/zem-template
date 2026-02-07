@@ -1,28 +1,13 @@
 {
   "name": "zem-template",
   "version": "1.0.0",
-  "description": "The Zero Exception Method \"Golden Standard\" Lit-Astro-CloudFlare Template... but really it's for ensuring Test Driven Development, Atomic Commits, GitFlow, and AI signing is enforced. It just happens to be Lit &amp; Astro on CloudFlare.",
-  "main": "index.js",
-  "directories": {
-    "doc": "docs"
-  },
+  "description": "ZEM Golden Standard Template",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node --experimental-strip-types --test test/*.test.ts"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/metagrapher/zem-template.git"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
-  "bugs": {
-    "url": "https://github.com/metagrapher/zem-template/issues"
-  },
-  "homepage": "https://github.com/metagrapher/zem-template#readme",
   "dependencies": {
-    "@octokit/rest": "^22.0.1",
+    "@octokit/rest": "^21.1.1",
     "front-matter": "^4.0.2"
   }
 }
