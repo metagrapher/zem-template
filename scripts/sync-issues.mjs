@@ -34,6 +34,18 @@ const findExistingIssueByTitle = async (title) => {
   }
 }
 
+const verifyTargetStatus = (file, target, attr) => {
+  if (target === 'IN_PROGRESS' && !attr.test_ref) {
+    console.warn(`[SYNC] WARN: "${file}" missing test_ref for IN_PROGRESS. Degrading to OPEN.`)
+    return 'OPEN'
+  }
+  if (target === 'CLOSED' && !attr.test_ref) {
+    console.warn(`[SYNC] WARN: "${file}" missing test_ref for CLOSED. Degrading to IN_PROGRESS.`)
+    return verifyTargetStatus(file, 'IN_PROGRESS', attr)
+  }
+  return target
+}
+
 const sync = async () => {
   const files = fs.readdirSync(ISSUES_DIR).filter(f => f.endsWith('.md'))
 
