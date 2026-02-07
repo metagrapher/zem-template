@@ -1,6 +1,7 @@
 ---
 title: Implement Result Monad Core
 status: OPEN
+gh_number: 2
 ---
 ## Description
 Implement the core `Result` type and constructors (`Ok`, `Fail`) for zero-exception error handling.
