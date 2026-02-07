@@ -104,7 +104,7 @@ const sync = async () => {
         console.log(`[SYNC] Matched existing issue #${gh_number}`)
       }
     }
-    const state = (status === 'CLOSED' ? 'closed' : 'open')
+    const state = (status === 'CLOSED' || status === 'DONE' ? 'closed' : 'open')
     const labels = [...(status === 'IN_PROGRESS' ? ['in-progress'] : []), ...(attributes.labels || [])]
 
     if (!gh_number) {
@@ -114,7 +114,15 @@ const sync = async () => {
       console.log(`[SYNC] Success! Created #${gh_number}`)
     } else {
       console.log(`[SYNC] Updating GitHub issue #${gh_number} (${status})`)
-      await octokit.rest.issues.update({ owner, repo, issue_number: parseInt(gh_number, 10), title: attributes.title, body, state, labels })
+      try {
+        await octokit.rest.issues.update({ owner, repo, issue_number: parseInt(gh_number, 10), title: attributes.title, body, state, labels })
+      } catch (error) {
+        if (error.status === 422) {
+          console.warn(`[ZEM] WARN: Failed to update GitHub issue #${gh_number}. This might be a merged PR. Skipping state/title sync.`)
+        } else {
+          throw error
+        }
+      }
     }
 
     const newContent =
