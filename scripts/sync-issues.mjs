@@ -5,7 +5,9 @@ import fm from 'front-matter'
 
 const ISSUES_DIR = '.issues'
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-const [owner, repo] = (process.env.GITHUB_REPOSITORY || '').split('/')
+const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
+const owner = envOwner || 'metagrapher'
+const repo = envRepo || 'zem-template'
 
 const findExistingIssueByTitle = async (title) => {
   try {
