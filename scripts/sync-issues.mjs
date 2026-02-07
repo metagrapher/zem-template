@@ -2,12 +2,28 @@ import fs from 'fs'
 import path from 'path'
 import { Octokit } from '@octokit/rest'
 import fm from 'front-matter'
+import { execSync } from 'child_process'
 
 const ISSUES_DIR = '.issues'
+
+const discoverRepo = () => {
+  const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
+  if (envOwner && envRepo) return { owner: envOwner, repo: envRepo }
+
+  try {
+    const url = execSync('git remote get-url origin', { encoding: 'utf8' }).trim()
+    // Matches git@github.com:owner/repo.git OR https://github.com/owner/repo.git
+    const match = url.match(/[:/]([^/]+)\/([^/.]+)(?:\.git)?$/)
+    if (match) return { owner: match[1], repo: match[2] }
+  } catch (e) {
+    // Silent fail if git fails
+  }
+
+  return { owner: 'metagrapher', repo: 'zem-template' } // Last resort fallback
+}
+
+const { owner, repo } = discoverRepo()
 const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN })
-const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
-const owner = envOwner || 'metagrapher'
-const repo = envRepo || 'zem-template'
 
 const findExistingIssueByTitle = async (title) => {
   try {
