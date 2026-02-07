@@ -56,15 +56,18 @@ const sync = async () => {
       console.log(`Created GitHub Issue #${gh_number}`);
     } else {
       console.log(`Updating issue #${gh_number}...`);
-      await octokit.issues.update({
-        owner,
-        repo,
-        issue_number: gh_number,
-        title: attributes.title,
-        body: body,
-        labels: attributes.labels || [],
-        state: (attributes.status === 'CLOSED' ? 'closed' : 'open')
-      });
+      await octokit.rest.issues.update(
+        ({
+          owner
+          , repo
+          , issue_number: parseInt(gh_number, 10)
+          , title: attributes.title
+          , body: body
+          , state: ((attributes.status === 'CLOSED' || attributes.status === 'DONE') ? 'closed' : 'open')
+          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
+        }
+        )
+      )
     }
 
     const newContent =
