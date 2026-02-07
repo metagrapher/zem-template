@@ -18,9 +18,18 @@ const findExistingIssueByTitle = async (title) => {
       }
       )
     )
-    return data.find(issue => issue.title === title)
+    const matches = data.filter(issue => issue.title === title)
+
+    if (matches.length > 1) {
+      console.warn(`[SYNC] WARNING: Multiple issues found with title "${title}": #${matches.map(m => m.number).join(', #')}`)
+      // Return the one that is NOT closed if possible, else the first/lowest number
+      const openMatch = matches.find(m => m.state === 'open')
+      return openMatch || matches[0]
+    }
+
+    return matches[0] || null
   } catch (error) {
-    console.error(`Error searching for existing issue titled "${title}":`, error)
+    console.error(`[SYNC] Error searching for existing issue titled "${title}":`, error)
     return null
   }
 }
