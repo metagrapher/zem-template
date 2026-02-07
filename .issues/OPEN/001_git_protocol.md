@@ -1,6 +1,6 @@
 ---
 title: Fix Antigravity Git Identity (GPG Alignment)
-status: DONE
+status: OPEN
 gh_number: 1
 ---
 ## Description

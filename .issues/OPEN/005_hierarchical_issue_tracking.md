@@ -1,8 +1,8 @@
 ---
 title: Implement Hierarchical Issue Tracking with State Machine Verification
 status: OPEN
+gh_number: 11
 ---
-
 ## Description
 Refactor the issue tracking system to use a hierarchical directory structure (`OPEN`, `IN_PROGRESS`, `CLOSED`) and implement a verification state machine that links issue status to test references (`test_ref`).
 

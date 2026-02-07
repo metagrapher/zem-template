@@ -1,6 +1,6 @@
 ---
 title: Fix Issue Synchronization
-status: CLOSED
+status: OPEN
 gh_number: 4
 ---
 # Fix Issue Synchronization

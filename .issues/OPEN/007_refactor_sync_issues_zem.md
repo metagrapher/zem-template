@@ -1,9 +1,8 @@
 ---
 title: Refactor sync-issues.mjs to ZEM
 status: OPEN
-gh_number: 
+gh_number: 14
 ---
-
 # Goal Description
 Refactor the `scripts/sync-issues.mjs` script to align with the Zero Exception Monad (ZEM) protocol and project aesthetics.
 

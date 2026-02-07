@@ -1,8 +1,8 @@
 ---
 title: Dynamic Repository Discovery for Golden Standard Portability
 status: OPEN
+gh_number: 12
 ---
-
 ## Description
 The issue synchronization script currently hardcodes `metagrapher/zem-template` as a fallback. This violates the "Golden Standard" principle for a template repository. The script should dynamically discover the repository owner and name from the local git configuration when environment variables are missing.
 
