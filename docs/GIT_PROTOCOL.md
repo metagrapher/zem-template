@@ -54,9 +54,16 @@ No logic may be added without a corresponding test.
 - **Green**: Code is written solely to satisfy the test.
 - **Refactor**: Clean up and optimize for ZEM compliance after passing.
 
-### 4.2 Granularity
-- **Function Isolation**: Every exported function is a testable unit. 
-- **Atomic Commits & Tests**: While every commit doesn't need its own full test run, any commit that adds logic MUST include the corresponding test changes.
+### 4.2 Documentation Mandate
+No function or component may be implemented without usage documentation.
+- **Functions**: Must include JSDoc comments detailing purpose, parameters, and return types.
+- **Components**: Must include a brief README or JSDoc describing properties and reactive states.
+- **Architecture**: Any major pattern change must be documented in `/docs`.
+
+### 4.3 Browser & Visual Testing (Playwright)
+Any feature with visual requirements or browser-specific state MUST be verified with Playwright.
+- Create `test/*.spec.ts` for end-to-end browser tests.
+- Visual regressions must be caught via screenshot comparisons if applicable.
 
 ### 4.3 Changing Legacy Tests
 Existing tests are the "Contracts of the Past."
@@ -78,3 +85,16 @@ After completing a task, the AI will provide a `git diff` command for the USER t
 
 ### 6.2 User-Controlled Merging
 Only the USER has the authority to merge an `ai/*` branch into `primary`.
+
+## 7. Architecture Lockdown (Technical Stack)
+
+To prevent "Architecture Erasure" and the use of deprecated patterns, the following stack is mandatory:
+
+### 7.1 The Golden Stack
+- **Astro**: Primary SSR shell and static routing.
+- **Hono**: Middleware, RPC, and API logic (enforcing auth and schema safety).
+- **Lit**: Client-side hydrated components ONLY. NO Astro-Lit SSR (deprecated).
+- **UnoCSS**: Atomic, semantic CSS. Usage of property-descriptive classes (e.g., `pt-4`) is forbidden in markup; use semantic shortcuts or composer rules.
+
+### 7.2 Zero Exception Method (ZEM)
+Always return `Result<T, E>`. Never `throw`. Never `try-catch`. Silence is forbidden; failures must be visible in the view.
