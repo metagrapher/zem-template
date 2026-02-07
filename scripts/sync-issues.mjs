@@ -44,27 +44,33 @@ const sync = async () => {
       }
     }
     if (!gh_number) {
-      console.log(`Creating issue for ${file}...`);
-      const { data } = await octokit.issues.create({
-        owner,
-        repo,
-        title: attributes.title,
-        body: body,
-        labels: attributes.labels || []
-      });
-      gh_number = data.number;
-      console.log(`Created GitHub Issue #${gh_number}`);
+      console.log(`[SYNC] Creating new GitHub issue for "${file}"`)
+      const { data } = await octokit.rest.issues.create(
+        ({
+          owner
+          , repo
+          , title: attributes.title
+          , body: body
+          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
+        }
+        )
+      )
+      gh_number = data.number
+      console.log(`[SYNC] Success! Created #${gh_number}`)
     } else {
-      console.log(`Updating issue #${gh_number}...`);
-      await octokit.issues.update({
-        owner,
-        repo,
-        issue_number: gh_number,
-        title: attributes.title,
-        body: body,
-        labels: attributes.labels || [],
-        state: (attributes.status === 'CLOSED' ? 'closed' : 'open')
-      });
+      console.log(`[SYNC] Updating GitHub issue #${gh_number} from local state`)
+      await octokit.rest.issues.update(
+        ({
+          owner
+          , repo
+          , issue_number: parseInt(gh_number, 10)
+          , title: attributes.title
+          , body: body
+          , state: ((attributes.status === 'CLOSED' || attributes.status === 'DONE') ? 'closed' : 'open')
+          , ...((Array.isArray(attributes.labels) && attributes.labels.length > 0) ? { labels: attributes.labels } : {})
+        }
+        )
+      )
     }
 
     const newContent =
