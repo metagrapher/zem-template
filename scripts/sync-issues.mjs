@@ -60,7 +60,8 @@ async function sync() {
         issue_number: gh_number,
         title: attributes.title,
         body: body,
-        labels: attributes.labels || []
+        labels: attributes.labels || [],
+        state: (attributes.status === 'CLOSED' ? 'closed' : 'open')
       });
     }
 
