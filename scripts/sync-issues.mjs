@@ -140,25 +140,31 @@ const getAllIssueFiles = () => {
   }).flat()
 }
 
-const sync = async () => {
-  const issueFiles = getAllIssueFiles()
+const syncIssue = async ({ file, folder }) => {
+  const filePath = path.join(ISSUES_DIR, folder, file)
+  const fileContent = readSafe(filePath)
+  if (!fileContent.ok) return
 
-  for (const { file, folder } of issueFiles) {
-    const filePath = path.join(ISSUES_DIR, folder, file)
-    const content = fs.readFileSync(filePath, 'utf8')
-    const { attributes, body } = fm(content)
+  const { attributes, body } = fm(fileContent.value)
 
-    let gh_number = attributes.gh_number
-    let status = folder
-    let targetStatus = attributes.status || folder
+  let gh_number = attributes.gh_number
+  let status = folder
+  const targetStatus = attributes.status || folder
 
-    const verifiedStatus = verifyTargetStatus(file, targetStatus, attributes)
+  const verifiedStatus = verifyTargetStatus(file, targetStatus, attributes)
 
-    if (verifiedStatus !== status) {
-      const newDirPath = path.join(ISSUES_DIR, verifiedStatus)
-      if (!fs.existsSync(newDirPath)) fs.mkdirSync(newDirPath)
-      const newFilePath = path.join(newDirPath, file)
-      console.log(`[SYNC] Moving "${file}" from ${status} to ${verifiedStatus}`)
+  if (verifiedStatus !== status) {
+    const newDirPath = path.join(ISSUES_DIR, verifiedStatus)
+    if (!fs.existsSync(newDirPath)) {
+      try {
+        fs.mkdirSync(newDirPath)
+      } catch (e) {
+        console.warn(`[ZEM] Failed to create directory ${newDirPath}`)
+      }
+    }
+    const newFilePath = path.join(newDirPath, file)
+    console.log(`[SYNC] Moving "${file}" from ${status} to ${verifiedStatus}`)
+    try {
       fs.renameSync(filePath, newFilePath)
       status = verifiedStatus
     }
