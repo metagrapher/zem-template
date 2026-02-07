@@ -29,16 +29,25 @@ export const discoverRepo = () => {
   const [envOwner, envRepo] = (process.env.GITHUB_REPOSITORY || '').split('/')
   if (envOwner && envRepo) return { owner: envOwner, repo: envRepo }
 
-  try {
-    const url = execSync('git remote get-url origin', { encoding: 'utf8' }).trim()
+  const gitUrl = execSafe('git remote get-url origin')
+  if (gitUrl.ok) {
     // Matches git@github.com:owner/repo.git OR https://github.com/owner/repo.git
-    const match = url.match(/[:/]([^/]+)\/([^/.]+)(?:\.git)?$/)
-    if (match) return { owner: match[1], repo: match[2] }
-  } catch (e) {
-    // Silent fail if git fails
+    const match = gitUrl.value.match(/[:/]([^/]+)\/([^/.]+)(?:\.git)?$/)
+    if (match) return (
+      {
+        owner: match[1]
+        , repo: match[2]
+      }
+    )
   }
 
-  return { owner: 'metagrapher', repo: 'zem-template' } // Last resort fallback
+  console.warn('[ZEM] Repo discovery failed. Falling back to default: metagrapher/zem-template')
+  return (
+    {
+      owner: 'metagrapher'
+      , repo: 'zem-template'
+    }
+  )
 }
 
 const { owner, repo } = discoverRepo()
